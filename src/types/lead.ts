@@ -22,6 +22,8 @@ export type Lead = {
   recommendedAction: string;
   /** Multi-step operational playbook from the qualification agent. */
   recommendedWorkflow?: string[];
+  /** Gemini owner alert line when API path is used. */
+  ownerNote?: string;
   status: LeadStatus;
   createdAt: string;
   /** First time the lead moved out of “New” — used for avg. response time. */

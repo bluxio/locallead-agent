@@ -25,7 +25,38 @@ This is **not** “another CRM dashboard.” It is a **lead-response and coordin
 2. **Qualification agent** — analyzes the job and outputs summary, heat score (1–10), estimated value, **next action**, and a **multi-step recommended workflow**.  
 3. **Command center** — today’s priority, metrics, rush queues, call/text actions, and status through booked/lost.
 
-The qualification layer uses deterministic rules today (`mockQualifyLead`) with the **same JSON shape** planned for OpenAI—so the UX is production-shaped without backend complexity in the MVP.
+Intake submits to **`POST /api/qualify`**, which calls **Gemini** and persists to **MongoDB Atlas** when configured. The UI falls back to `mockQualifyLead` if the API, Gemini, or MongoDB is unavailable.
+
+---
+
+## Hackathon agent layer
+
+| Piece | Role |
+|-------|------|
+| **Gemini** (`GEMINI_API_KEY`) | Reasons over intake → summary, urgency, value, next action, workflow, owner note |
+| **MongoDB Atlas** (`MONGODB_URI`) | `locallead.leads` + `locallead.lead_events` on each qualification |
+| **`POST /api/qualify`** | Thin server bridge — no UI rebuild |
+| **This UI** | Human oversight command center (call, text, status) |
+| **MongoDB MCP + Agent Builder** | Hackathon track orchestration layer (see `docs/HACKATHON_AGENT.md`) |
+
+### Environment
+
+Copy `.env.example` → `.env.local`:
+
+```bash
+GEMINI_API_KEY=your_gemini_key
+MONGODB_URI=mongodb+srv://...
+```
+
+Vercel: add the same variables in **Project → Settings → Environment Variables**, then redeploy.
+
+### Test the agent path
+
+1. `npm install` && `npm run dev`  
+2. Submit an urgent HVAC job on `/demo`  
+3. Confirm owner packet + workflow (Gemini copy if key is set)  
+4. In Atlas: `locallead.leads` and `locallead.lead_events`  
+5. Dashboard still reads browser storage (lead is mirrored via `appendLead`)
 
 ---
 
@@ -48,8 +79,10 @@ flowchart LR
     Form[Homeowner form]
   end
   subgraph agent [Qualification agent]
-    Q[mockQualifyLead]
-    Q --> Summary[AI summary]
+    API["POST /api/qualify"]
+    API --> Gemini[Gemini]
+    API --> Atlas[(MongoDB Atlas)]
+    API --> Summary[AI summary]
     Q --> Heat[Urgency score]
     Q --> Value[Est. job value]
     Q --> Action[Next action]
@@ -67,10 +100,10 @@ flowchart LR
   subgraph store [Browser]
     LS[(localStorage)]
   end
-  Form --> Q
-  Q --> Owner
-  Q --> SMS
-  Q --> LS
+  Form --> API
+  API --> Owner
+  API --> SMS
+  API --> LS
   LS --> Priority
   LS --> Board
   LS --> Activity

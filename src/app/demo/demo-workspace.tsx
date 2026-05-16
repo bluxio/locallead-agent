@@ -43,6 +43,7 @@ import {
 } from "@/lib/lead-comms";
 import { appendLead } from "@/lib/leads-storage";
 import { mockQualifyLead, type QualifyInput } from "@/lib/mock-qualify";
+import { submitLeadForQualification } from "@/lib/qualify-client";
 import type { Lead } from "@/types/lead";
 import { cn } from "@/lib/utils";
 
@@ -151,21 +152,8 @@ export function DemoWorkspace() {
     if (!canSubmit || pending) return;
 
     setPending(true);
-    await new Promise((r) => setTimeout(r, 950));
 
-    const qualifyInput = {
-      name: name.trim(),
-      serviceType,
-      location: location.trim(),
-      urgency,
-      preferredContact,
-      description: description.trim(),
-    };
-
-    const qualified = mockQualifyLead(qualifyInput);
-
-    const lead: Lead = {
-      id: crypto.randomUUID(),
+    const payload = {
       name: name.trim(),
       phone: phone.trim(),
       email: email.trim(),
@@ -174,13 +162,11 @@ export function DemoWorkspace() {
       urgency,
       preferredContact,
       description: description.trim(),
-      ...qualified,
-      status: "New",
-      createdAt: new Date().toISOString(),
     };
 
-    appendLead(lead);
-    setSavedLead(lead);
+    const result = await submitLeadForQualification(payload);
+    appendLead(result.lead);
+    setSavedLead(result.lead);
     setPhase("success");
     setPending(false);
   }
@@ -225,7 +211,7 @@ export function DemoWorkspace() {
               Owner alert
             </p>
             <p className="mt-3 text-[14px] leading-relaxed text-foreground/95">
-              {buildOwnerNotification(savedLead)}
+              {savedLead.ownerNote ?? buildOwnerNotification(savedLead)}
             </p>
           </div>
 
