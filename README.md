@@ -1,5 +1,12 @@
 # LocalLead Agent
 
+AI-powered lead qualification and follow-up dashboard for home-service businesses, built with **Next.js**, **TypeScript**, and **Tailwind CSS**.
+
+| | |
+|---|---|
+| **GitHub** | [github.com/bluxio/locallead-agent](https://github.com/bluxio/locallead-agent) |
+| **Live demo** | Deploy on Vercel (see below), then add your URL here |
+
 LocalLead Agent helps **local trades** (HVAC, plumbing, roofing, electrical, and more) **capture homeowner requests**, **summarize urgency and value**, and **work leads on one command center**—in the browser for this MVP.
 
 Run from `locadle-agent/`:
@@ -81,12 +88,17 @@ npm run start   # production server after build
 
 ## Deploy (Vercel)
 
+1. Go to [vercel.com/new](https://vercel.com/new).
+2. **Import** the GitHub repo `bluxio/locallead-agent`.
+3. Framework should auto-detect **Next.js** — leave defaults, click **Deploy**.
+4. Copy the production URL (e.g. `https://locallead-agent.vercel.app`) into this README and your resume.
+
+Optional CLI (after `vercel login`):
+
 ```bash
 cd locadle-agent
-npx vercel
+npx vercel --prod
 ```
-
-Follow prompts, or connect the repo in the Vercel dashboard with **Root Directory** = `locadle-agent`.
 
 ## Stack
 
