@@ -20,6 +20,8 @@ export type Lead = {
   valueLow?: number;
   valueHigh?: number;
   recommendedAction: string;
+  /** Multi-step operational playbook from the qualification agent. */
+  recommendedWorkflow?: string[];
   status: LeadStatus;
   createdAt: string;
   /** First time the lead moved out of “New” — used for avg. response time. */

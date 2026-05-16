@@ -9,10 +9,12 @@ import {
   Sparkles,
 } from "lucide-react";
 
+import { RecommendedWorkflow } from "@/components/dashboard/recommended-workflow";
 import {
   DemoLivePreview,
   type DemoPreviewDisplay,
 } from "@/components/demo/demo-live-preview";
+import { getLeadWorkflow } from "@/lib/lead-workflow";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -275,6 +277,10 @@ export function DemoWorkspace() {
               <span className="font-medium text-foreground">Summary · </span>
               {savedLead.aiSummary}
             </p>
+          </div>
+
+          <div className="rounded-2xl border border-border/55 bg-card p-5 shadow-[var(--lla-shadow-card)]">
+            <RecommendedWorkflow steps={getLeadWorkflow(savedLead)} />
           </div>
         </div>
 

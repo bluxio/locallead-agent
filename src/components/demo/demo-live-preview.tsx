@@ -9,6 +9,7 @@ import {
   responseTimingLabel,
 } from "@/lib/lead-comms";
 import type { Lead } from "@/types/lead";
+import { RecommendedWorkflow } from "@/components/dashboard/recommended-workflow";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -117,6 +118,15 @@ export function DemoLivePreview({ qualify, display, mode }: Props) {
           <span className="text-foreground">{qualify.estimatedValue}</span>
         </p>
       </div>
+
+      {(qualify.recommendedWorkflow?.length ?? 0) > 0 ? (
+        <div className="rounded-2xl border border-border/50 bg-card/90 p-4 shadow-[var(--lla-shadow-card)]">
+          <RecommendedWorkflow
+            steps={qualify.recommendedWorkflow ?? []}
+            compact
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

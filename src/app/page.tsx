@@ -58,8 +58,8 @@ export default function HomePage() {
                 Win the first five minutes after every lead.
               </h1>
               <p className="mt-6 max-w-lg text-pretty text-[17px] leading-relaxed text-muted-foreground sm:text-lg lg:max-w-xl">
-                One calm intake flow: capture the job, text the homeowner, and hand
-                your owner a ready-to-run summary—before the next crew texts them back.
+                An AI coordination layer for inbound jobs: qualify urgency, recommend
+                a workflow, and get your crew moving—before the next company texts back.
               </p>
               <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
                 <Link href="/demo" className={buttonVariants({ size: "lg" })}>

@@ -1,115 +1,178 @@
 # LocalLead Agent
 
-AI-powered lead qualification and follow-up dashboard for home-service businesses, built with **Next.js**, **TypeScript**, and **Tailwind CSS**.
+**AI-powered operational assistant for home-service businesses** that qualifies inbound leads, prioritizes urgency, recommends next actions, and organizes follow-up workflows—so crews respond before competitors.
+
+Built with **Next.js**, **TypeScript**, and **Tailwind CSS**.
 
 | | |
 |---|---|
 | **GitHub** | [github.com/bluxio/locallead-agent](https://github.com/bluxio/locallead-agent) |
-| **Live demo** | Deploy on Vercel (see below), then add your URL here |
+| **Live demo** | _Add your Vercel URL after deploy_ |
 
-LocalLead Agent helps **local trades** (HVAC, plumbing, roofing, electrical, and more) **capture homeowner requests**, **summarize urgency and value**, and **work leads on one command center**—in the browser for this MVP.
+---
 
-Run from `locadle-agent/`:
+## One-line pitch (resume / LinkedIn / hackathon)
+
+> LocalLead Agent is an AI-powered operational assistant for home-service businesses that automatically qualifies inbound leads, prioritizes urgency, recommends next actions, and organizes follow-up workflows to reduce lost revenue from delayed response times.
+
+---
+
+## What it is (positioning)
+
+This is **not** “another CRM dashboard.” It is a **lead-response and coordination agent** for local trades:
+
+1. **Intake** — homeowner request lands with trade, location, urgency, and contact preference.  
+2. **Qualification agent** — analyzes the job and outputs summary, heat score (1–10), estimated value, **next action**, and a **multi-step recommended workflow**.  
+3. **Command center** — today’s priority, metrics, rush queues, call/text actions, and status through booked/lost.
+
+The qualification layer uses deterministic rules today (`mockQualifyLead`) with the **same JSON shape** planned for OpenAI—so the UX is production-shaped without backend complexity in the MVP.
+
+---
+
+## Features
+
+- Marketing landing page with product-style hero and before/after narrative  
+- Homeowner intake with **live owner preview** (desktop two-column)  
+- **Lead packet** on submit: owner alert, customer auto-text draft, recommended action, **recommended workflow**  
+- **Command center**: today’s priority, KPI strip, volume chart, pipeline + activity, rush/new queues, searchable lead table  
+- **Follow-up actions**: call, text (draft body), booking link copy, mark contacted/booked  
+- **Sample North Texas jobs** when the board is empty; new submissions appear at the top  
+
+---
+
+## Architecture
+
+```mermaid
+flowchart LR
+  subgraph intake [Intake]
+    Form[Homeowner form]
+  end
+  subgraph agent [Qualification agent]
+    Q[mockQualifyLead]
+    Q --> Summary[AI summary]
+    Q --> Heat[Urgency score]
+    Q --> Value[Est. job value]
+    Q --> Action[Next action]
+    Q --> Workflow[Recommended workflow]
+  end
+  subgraph comms [Comms previews]
+    Owner[Owner alert]
+    SMS[Customer auto-text]
+  end
+  subgraph ops [Command center]
+    Priority[Today's priority]
+    Board[Lead table + status]
+    Activity[Activity log]
+  end
+  subgraph store [Browser]
+    LS[(localStorage)]
+  end
+  Form --> Q
+  Q --> Owner
+  Q --> SMS
+  Q --> LS
+  LS --> Priority
+  LS --> Board
+  LS --> Activity
+```
+
+| Layer | Path | Role |
+|--------|------|------|
+| Pages | `src/app/` | `/`, `/demo`, `/dashboard` |
+| Agent | `src/lib/mock-qualify.ts` | Qualification + workflow generation |
+| Comms | `src/lib/lead-comms.ts` | Owner alert + customer text copy |
+| Storage | `src/lib/leads-storage.ts` | Leads + activity in `localStorage` |
+| Seeds | `src/lib/seed-leads.ts` | Sample DFW-area jobs |
+
+---
+
+## Hackathon angle (MongoDB track)
+
+**Story:** LocalLead Agent is an operational AI agent for home-service SMBs. The qualification step is multi-step reasoning (parse job → score urgency → estimate value → recommend action → output workflow). **MongoDB Atlas** is the natural next step for `leads`, `lead_events`, and per-company workflow history—without changing the UI loop.
+
+**Do not rebuild for the submission.** Extend narrative + optional Atlas integration later; the live demo + video + workflow UI already reads as agentic.
+
+---
+
+## Demo script (~3 minutes)
+
+1. **Landing** (`/`) — problem + **Log a job request**.  
+2. **Intake** (`/demo`) — urgent HVAC, Plano TX; show preview updating; **Generate lead packet**.  
+3. **Packet** — owner alert, auto-text, **recommended workflow** (same-day diagnostic, rush escalation, etc.).  
+4. **Command center** (`/dashboard`) — today’s priority, workflow on rush card, **Text customer**, **Mark booked**.  
+5. **Refresh** — status persists.  
+6. **Close** — “Production: OpenAI + MongoDB + Twilio on this same flow.”
+
+---
+
+## Screenshots (add before sharing)
+
+Create `docs/screenshots/` and drop PNGs; link them here:
+
+| Screen | File |
+|--------|------|
+| Landing hero | `docs/screenshots/home-hero.png` |
+| Intake + preview | `docs/screenshots/demo-intake.png` |
+| Lead packet + workflow | `docs/screenshots/demo-packet.png` |
+| Today's priority | `docs/screenshots/dashboard-priority.png` |
+| Command center | `docs/screenshots/dashboard-full.png` |
+
+---
+
+## Getting started
 
 ```bash
+git clone https://github.com/bluxio/locallead-agent.git
+cd locallead-agent
 npm install
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
 
-## What it does
+## Deploy (Vercel) — do this first
 
-1. **Homeowner intake** — trade, location, urgency, contact preference, and job details.  
-2. **Owner packet** — alert copy, customer text draft, heat score, estimated value, and recommended next step (rules-based today; same shape for AI later).  
-3. **Command center** — today’s priority, metrics, charts, rush/new queues, and a full lead table with call, text, booking link, and status updates.
-
-Data stays in **this browser** (`localStorage`). No sign-in, no SMS sent, no backend required for the MVP.
-
-## Demo script (~3 minutes)
-
-Use this flow when recording for recruiters or a hackathon:
-
-1. **Landing page** (`/`)  
-   - Point to the hero: win the first five minutes after a lead.  
-   - Click **Log a job request**.
-
-2. **Submit an urgent HVAC lead** (`/demo`)  
-   - Example: *Jordan Martinez*, Plano TX, **Emergency / same day**, HVAC, text preferred.  
-   - Description: upstairs AC not cooling since last night.  
-   - Show the **owner preview** updating on the right (desktop).  
-   - Click **Generate lead packet**.
-
-3. **Owner alert + auto-text** (success screen)  
-   - Read the **Owner alert** and **Customer auto-text** (not sent—preview only).  
-   - Call out **Recommended next action** and heat score.
-
-4. **Command center** (`/dashboard`)  
-   - Click **Open command center**.  
-   - **Today’s priority** should surface your new lead (or the hottest rush job).  
-   - Note sample jobs (Plano, Dallas, Frisco, McKinney) if the board was empty before.
-
-5. **Text customer**  
-   - On the priority panel or table row, click **Text customer** (opens the device SMS app with a draft).  
-   - Mention production would send via Twilio from your business number.
-
-6. **Mark booked**  
-   - Click **Mark contacted**, then **Mark booked**.  
-   - Refresh the page—status and activity should persist.
-
-7. **Close**  
-   - Optional: filter by status or search by city/name.  
-   - Say next step: Supabase persistence + Twilio + OpenAI on the same UX.
-
-## Screenshots (add before sharing)
-
-| Screen | Suggested file |
-|--------|----------------|
-| Landing hero | `docs/screenshots/home-hero.png` |
-| Intake + live preview | `docs/screenshots/demo-intake.png` |
-| Lead packet success | `docs/screenshots/demo-packet.png` |
-| Today’s priority | `docs/screenshots/dashboard-priority.png` |
-| Full command center | `docs/screenshots/dashboard-full.png` |
+1. [vercel.com/new](https://vercel.com/new) → Import **`bluxio/locallead-agent`**.  
+2. Framework: **Next.js** (root = repo root). Deploy.  
+3. Paste production URL in this README + resume + LinkedIn.  
 
 ## Sample data
 
-On first visit with an empty board, the app loads **six realistic North Texas sample jobs** (HVAC, plumbing, roofing, electrical across Plano, Dallas, Frisco, McKinney, Allen, Richardson).  
-**New submissions are prepended** and appear alongside samples.
+Six DFW-area sample jobs load when the board is empty. **Your intake submissions prepend** to the same list.
 
-To reset: clear site data for localhost in your browser, then reload.
+Reset: clear site data for the app origin, reload.
 
 ## Scripts
 
 ```bash
 npm run lint
 npm run build
-npm run start   # production server after build
+npm run start
 ```
 
-## Deploy (Vercel)
+## Roadmap
 
-1. Go to [vercel.com/new](https://vercel.com/new).
-2. **Import** the GitHub repo `bluxio/locallead-agent`.
-3. Framework should auto-detect **Next.js** — leave defaults, click **Deploy**.
-4. Copy the production URL (e.g. `https://locallead-agent.vercel.app`) into this README and your resume.
+| Phase | Work |
+|-------|------|
+| Now | Deploy, screenshots, 2–3 min demo video, LinkedIn post |
+| Next | OpenAI route returning current `QualifyResult` shape |
+| Then | MongoDB Atlas for leads + events |
+| Then | Twilio owner SMS + customer texts |
 
-Optional CLI (after `vercel login`):
+## Out of scope (MVP)
 
-```bash
-cd locadle-agent
-npx vercel --prod
-```
+Auth · payments · real Twilio · real OpenAI API · multi-tenant backend
 
-## Stack
+---
 
-Next.js App Router · TypeScript · Tailwind v4 · shadcn/ui · localStorage
+## 7-day distribution checklist
 
-## Out of scope (by design)
-
-Authentication · payments · real Twilio · real OpenAI · multi-tenant backend
-
-## Future (same UX)
-
-- **OpenAI** — replace `mockQualifyLead()` with an API returning the same fields.  
-- **Supabase** — persist leads and activity per company.  
-- **Twilio** — send owner alerts and customer texts from the command center actions.
+| Day | Task |
+|-----|------|
+| 1 | Vercel live URL + README link + 5 screenshots |
+| 2 | Record demo video (< 3 min), upload (YouTube unlisted / Loom) |
+| 3 | LinkedIn post + pin GitHub repo on profile |
+| 4 | Hackathon submission draft (MongoDB track narrative) |
+| 5 | Send link to 3 people for feedback (recruiter, peer, local business contact) |
+| 6 | Resume bullet + portfolio site link |
+| 7 | Optional: MongoDB Atlas spike (read/write one collection)—only if hackathon deadline requires it |

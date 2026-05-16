@@ -6,6 +6,8 @@ import type { ComponentProps, ReactNode } from "react";
 import { ClipboardList, Inbox, Search, Sparkles } from "lucide-react";
 
 import { LeadFollowUpActions } from "@/components/dashboard/lead-follow-up-actions";
+import { RecommendedWorkflow } from "@/components/dashboard/recommended-workflow";
+import { getLeadWorkflow } from "@/lib/lead-workflow";
 import { LeadsLineChart } from "@/components/dashboard/leads-line-chart";
 import { RecentActivityFeed } from "@/components/dashboard/recent-activity-feed";
 import { StatusPipelineChart } from "@/components/dashboard/status-pipeline-chart";
@@ -166,6 +168,7 @@ function LeadMiniCard({
       </CardHeader>
       <CardContent className="space-y-3 pt-0 text-[13px] leading-relaxed text-muted-foreground">
         <p className="line-clamp-2 text-foreground/85">{lead.aiSummary}</p>
+        <RecommendedWorkflow steps={getLeadWorkflow(lead)} compact />
         <LeadFollowUpActions
           lead={lead}
           onMarkContacted={() => {
@@ -367,6 +370,12 @@ export function DashboardClient() {
                 <p className="mt-2 text-[14px] leading-relaxed text-foreground">
                   {todayPriorityLead.recommendedAction}
                 </p>
+              </div>
+              <div className="rounded-xl border border-border/45 bg-muted/25 p-4">
+                <RecommendedWorkflow
+                  steps={getLeadWorkflow(todayPriorityLead)}
+                  compact
+                />
               </div>
             </div>
             <div className="w-full shrink-0 space-y-3 border-t border-border/40 pt-6 lg:max-w-[340px] lg:border-t-0 lg:border-l lg:pt-0 lg:pl-10">

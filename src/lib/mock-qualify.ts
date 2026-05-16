@@ -16,6 +16,7 @@ export type QualifyResult = Pick<
   | "urgencyScore"
   | "estimatedValue"
   | "recommendedAction"
+  | "recommendedWorkflow"
   | "valueLow"
   | "valueHigh"
 >;
@@ -95,6 +96,82 @@ function heatLabel(score: number): string {
   return "Routine";
 }
 
+/**
+ * Multi-step operational playbook — surfaces agent-style coordination without a rebuild.
+ * Later: same JSON shape from an LLM tool call.
+ */
+function buildRecommendedWorkflow(
+  input: QualifyInput,
+  score: number,
+): string[] {
+  const d = input.description.toLowerCase();
+  const prefersText = input.preferredContact === "Text message";
+  const prefersPhone = input.preferredContact === "Phone call";
+  const steps: string[] = [];
+
+  if (score >= 8) {
+    if (prefersText) {
+      steps.push(
+        "Send an immediate text confirming you received the request and that help is on the way.",
+      );
+    } else if (prefersPhone) {
+      steps.push("Call the homeowner within 10 minutes — do not wait for voicemail.");
+    } else {
+      steps.push(
+        "Reply within 15 minutes with a clear next step and who will follow up.",
+      );
+    }
+  } else if (prefersPhone) {
+    steps.push("Call within 30 minutes with a rough price range and two visit windows.");
+  } else if (prefersText) {
+    steps.push("Send a short text within 30 minutes asking one clarifying question.");
+  } else {
+    steps.push("Email a concise quote within 2 hours with booking options.");
+  }
+
+  const hvacHeat =
+    input.serviceType === "HVAC" &&
+    (/not cooling|no ac|no heat|won't cool|upstairs|extreme heat|90°|95°/i.test(d) ||
+      score >= 8);
+  const waterEmergency = /leak|flood|burst|sewage|water damage/i.test(d);
+  const electricalUrgent = /spark|outlet|panel|no power|burning smell/i.test(d);
+
+  if (hvacHeat) {
+    steps.push(
+      "Offer a same-day diagnostic visit and confirm access to the affected zone or unit.",
+    );
+    steps.push(
+      "Escalate to rush priority — assign a technician callback within 10 minutes.",
+    );
+  } else if (waterEmergency) {
+    steps.push(
+      "Ask them to shut off water at the main if safe; note any active damage for dispatch.",
+    );
+    steps.push("Escalate to high priority and confirm emergency dispatch timing.");
+  } else if (electricalUrgent && score >= 5) {
+    steps.push(
+      "Treat as safety-sensitive: confirm whether power is isolated before scheduling.",
+    );
+    steps.push("Offer earliest available slot and flag for licensed electrician review.");
+  } else if (score >= 8) {
+    steps.push(
+      `Offer same-day or next-available ${input.serviceType.toLowerCase()} window with a named arrival range.`,
+    );
+  } else {
+    steps.push(
+      `Propose two appointment windows for ${input.serviceType.toLowerCase()} service in ${input.location.split(",")[0]?.trim() || "their area"}.`,
+    );
+  }
+
+  if (score >= 5 && !hvacHeat && !waterEmergency) {
+    steps.push("Set board status to Contacted once the homeowner has been reached.");
+  }
+
+  steps.push("Update the command center when booked or if the job is lost to a competitor.");
+
+  return steps.slice(0, 5);
+}
+
 function buildRecommendedAction(
   input: QualifyInput,
   score: number,
@@ -147,6 +224,7 @@ export function mockQualifyLead(input: QualifyInput): QualifyResult {
   const estimatedValue = moneyRange(valueLow, valueHigh);
 
   const recommendedAction = buildRecommendedAction(input, urgencyScore);
+  const recommendedWorkflow = buildRecommendedWorkflow(input, urgencyScore);
 
   const heat = heatLabel(urgencyScore);
   const descShort = trimDescription(input.description);
@@ -164,6 +242,7 @@ export function mockQualifyLead(input: QualifyInput): QualifyResult {
     urgencyScore,
     estimatedValue,
     recommendedAction,
+    recommendedWorkflow,
     valueLow,
     valueHigh,
   };
