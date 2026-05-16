@@ -86,11 +86,18 @@ flowchart LR
 
 ---
 
-## Hackathon angle (MongoDB track)
+## Google Cloud Rapid Agent Hackathon (MongoDB track)
 
-**Story:** LocalLead Agent is an operational AI agent for home-service SMBs. The qualification step is multi-step reasoning (parse job → score urgency → estimate value → recommend action → output workflow). **MongoDB Atlas** is the natural next step for `leads`, `lead_events`, and per-company workflow history—without changing the UI loop.
+**Devpost:** [rapid-agent.devpost.com](https://rapid-agent.devpost.com/) · Deadline **Jun 11, 2026**
 
-**Do not rebuild for the submission.** Extend narrative + optional Atlas integration later; the live demo + video + workflow UI already reads as agentic.
+| Doc | Purpose |
+|-----|---------|
+| [`DEVPOST.md`](./DEVPOST.md) | Copy/paste submission text, video script, checklist |
+| [`docs/HACKATHON_AGENT.md`](./docs/HACKATHON_AGENT.md) | Gemini + Agent Builder + **MongoDB MCP** compliance path |
+
+**Important:** The live UI is your **oversight layer**. Judges require **Gemini**, **Agent Builder**, and **MongoDB MCP**—see `docs/HACKATHON_AGENT.md` before submitting.
+
+**License:** MIT — set **About → License** on GitHub to match `LICENSE`.
 
 ---
 
