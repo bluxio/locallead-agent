@@ -11,6 +11,46 @@ Built with **Next.js**, **TypeScript**, and **Tailwind CSS**.
 
 ---
 
+## For technical reviewers
+
+This MVP includes a **real full-stack qualification workflow**:
+
+- Next.js App Router + TypeScript frontend
+- Server-side **`POST /api/qualify`** route
+- **Gemini 2.0 Flash** lead qualification (structured JSON)
+- **MongoDB Atlas** persistence (`leads`, `lead_events`)
+- **`GET /api/leads`** — dashboard hydrates from Atlas when configured
+- **`PATCH /api/leads/[id]/status`** — status updates + event log
+- Operational CRM-style command center (human oversight)
+- **Mock fallback** if AI/API/DB is unavailable
+
+Current architecture intentionally prioritizes fast iteration and demo clarity over production infrastructure (no auth, queues, or k8s).
+
+### Core flow
+
+```text
+Homeowner intake
+  → server-side qualification agent (Gemini)
+  → structured summary + workflow
+  → MongoDB persistence + lead_events
+  → command center (load + status updates from Atlas)
+```
+
+### Key files
+
+| File | Role |
+|------|------|
+| `src/app/api/qualify/route.ts` | Qualify + persist new leads |
+| `src/app/api/leads/route.ts` | Dashboard data from MongoDB |
+| `src/app/api/leads/[id]/status/route.ts` | Status change + event |
+| `src/lib/gemini-qualify.ts` | Gemini API + JSON parse |
+| `src/lib/mongodb.ts` | Atlas connection |
+| `src/lib/lead-repository.ts` | Lead CRUD |
+| `src/lib/lead-events.ts` | Event log helpers |
+| `src/app/dashboard/dashboard-client.tsx` | Command center UI |
+
+---
+
 ## One-line pitch (resume / LinkedIn / hackathon)
 
 > LocalLead Agent is an AI-powered operational assistant for home-service businesses that automatically qualifies inbound leads, prioritizes urgency, recommends next actions, and organizes follow-up workflows to reduce lost revenue from delayed response times.
@@ -56,7 +96,7 @@ Vercel: add the same variables in **Project → Settings → Environment Variabl
 2. Submit an urgent HVAC job on `/demo`  
 3. Confirm owner packet + workflow (Gemini copy if key is set)  
 4. In Atlas: `locallead.leads` and `locallead.lead_events`  
-5. Dashboard still reads browser storage (lead is mirrored via `appendLead`)
+5. Dashboard loads from **MongoDB** when `MONGODB_URI` is set (falls back to browser storage + sample seeds)
 
 ---
 

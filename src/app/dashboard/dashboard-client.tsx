@@ -49,12 +49,8 @@ import {
   highPriorityOpenLeads,
   pipelinePotentialHigh,
 } from "@/lib/lead-metrics";
-import {
-  getStoredActivity,
-  getStoredLeads,
-  initializeLeadsIfEmpty,
-  updateLeadStatus,
-} from "@/lib/leads-storage";
+import { fetchBoard, patchLeadStatus } from "@/lib/leads-api-client";
+import type { BoardSource } from "@/lib/leads-api-client";
 import { cn } from "@/lib/utils";
 import { PAGE_GUTTER } from "@/lib/layout";
 
@@ -135,10 +131,10 @@ function statusChipVariant(
 
 function LeadMiniCard({
   lead,
-  onRefresh,
+  onStatusChange,
 }: {
   lead: Lead;
-  onRefresh: () => void;
+  onStatusChange: (id: string, status: LeadStatus) => void;
 }) {
   return (
     <Card
@@ -171,14 +167,8 @@ function LeadMiniCard({
         <RecommendedWorkflow steps={getLeadWorkflow(lead)} compact />
         <LeadFollowUpActions
           lead={lead}
-          onMarkContacted={() => {
-            updateLeadStatus(lead.id, "Contacted");
-            onRefresh();
-          }}
-          onMarkBooked={() => {
-            updateLeadStatus(lead.id, "Booked");
-            onRefresh();
-          }}
+          onMarkContacted={() => onStatusChange(lead.id, "Contacted")}
+          onMarkBooked={() => onStatusChange(lead.id, "Booked")}
         />
       </CardContent>
     </Card>
@@ -189,19 +179,21 @@ export function DashboardClient() {
   const [hydrated, setHydrated] = useState(false);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
+  const [boardSource, setBoardSource] = useState<BoardSource>("local");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<LeadStatus | "all">("all");
 
-  const refresh = useCallback(() => {
-    initializeLeadsIfEmpty();
-    setLeads(getStoredLeads());
-    setActivity(getStoredActivity());
+  const refresh = useCallback(async () => {
+    const board = await fetchBoard();
+    setLeads(board.leads);
+    setActivity(board.activity);
+    setBoardSource(board.source);
+    setHydrated(true);
   }, []);
 
   useEffect(() => {
     const t = window.setTimeout(() => {
-      refresh();
-      setHydrated(true);
+      void refresh();
     }, 0);
     return () => window.clearTimeout(t);
   }, [refresh]);
@@ -268,10 +260,13 @@ export function DashboardClient() {
     });
   }, [leads, query, statusFilter]);
 
-  function onStatusChange(id: string, status: LeadStatus) {
-    const next = updateLeadStatus(id, status);
-    setLeads(next);
-    setActivity(getStoredActivity());
+  async function onStatusChange(id: string, status: LeadStatus) {
+    const board = await patchLeadStatus(id, status);
+    if (board) {
+      setLeads(board.leads);
+      setActivity(board.activity);
+      setBoardSource(board.source);
+    }
   }
 
   if (!hydrated) {
@@ -314,6 +309,11 @@ export function DashboardClient() {
             what to text, and what&apos;s still on the hook—without digging
             through threads.
           </p>
+          {boardSource === "mongodb" ? (
+            <p className="text-[12px] font-medium text-primary">
+              Synced from MongoDB Atlas
+            </p>
+          ) : null}
         </div>
         <Link
           href="/demo"
@@ -573,7 +573,7 @@ export function DashboardClient() {
             ) : (
               <div className="grid gap-4">
                 {hotOpen.slice(0, 4).map((lead) => (
-                  <LeadMiniCard key={lead.id} lead={lead} onRefresh={refresh} />
+                  <LeadMiniCard key={lead.id} lead={lead} onStatusChange={onStatusChange} />
                 ))}
               </div>
             )}
@@ -596,7 +596,7 @@ export function DashboardClient() {
             ) : (
               <div className="grid gap-4">
                 {followUps.slice(0, 4).map((lead) => (
-                  <LeadMiniCard key={lead.id} lead={lead} onRefresh={refresh} />
+                  <LeadMiniCard key={lead.id} lead={lead} onStatusChange={onStatusChange} />
                 ))}
               </div>
             )}
